@@ -1,39 +1,41 @@
-use futures_util::{SinkExt, StreamExt};
-use tokio::{sync::{broadcast, mpsc::{self}}, task::JoinHandle};
+use futures_util::{select, SinkExt, StreamExt};
+use tokio::{sync::{broadcast, mpsc::{self}}, task::JoinHandle, try_join};
 use tokio_tungstenite::{connect_async, tungstenite::Message};
 
 
 pub struct Connection{
-    sender: tokio::sync::mpsc::Sender<Message>,
-    reader: tokio::sync::broadcast::Sender<Message>,
-    _sender_handle: JoinHandle<()>,
-    _reader_handle: JoinHandle<()>,
-    _exit: tokio::sync::broadcast::Sender<()>
+    _sender: mpsc::Sender<Message>,
+    _broadcaster: broadcast::Sender<Message>,
+    _handle: JoinHandle<()>,
+    _exit: broadcast::Sender<()>
 }
 impl Connection{
 
 
     pub async fn connect(url: &str) -> Result<Self, ()>{
-        let (sender, mut recver) = mpsc::channel::<Message>(32);
-        let (broadcaster, _) = broadcast::channel::<Message>(usize::MAX);
+        let (_sender, mut recver) = mpsc::channel::<Message>(32);
+        let (_broadcaster, _) = broadcast::channel::<Message>(usize::MAX);
         let (_exit, _) = broadcast::channel::<()>(1);
-        let exit = _exit.clone();
+        
+        //Setup connection
         let (mut ws_writer, ws_reader) = connect_async(url).await
+        //re-map errors
         .map_err(|_err| {
             todo!()
         })?.0
+        //split into r/w
         .split();
-    
-        Ok(Self{
-            //Send messages to Kraken API
-            sender,
-            //Recieve messages from Kraken API 
-            reader: broadcaster.clone(),
-            //Command broadcaster
-            _exit: _exit.clone(),
 
-            //Thread to Fan-In Messages
-            _sender_handle: tokio::spawn(async move{
+        //Clones for move
+        let exit = _exit.clone();
+        let broadcaster = _broadcaster.clone();
+
+        //Parent Thread (spawn 3 internal threads and manage lifecycles)
+        let _handle = tokio::spawn(async move{
+            //Clone for write thread
+            let _exit = exit.clone();
+            //Write Thread
+            let writer_handle: JoinHandle<Result<(), ()>> = tokio::task::spawn(async move{
                 let exit = _exit;
                 while let Some(msg) = recver.recv().await {
                     match ws_writer.send(msg).await{
@@ -46,18 +48,18 @@ impl Connection{
                         },
                     };
                 }
-            }),
-
-            //Thread to Fan-Out Messages
-            _reader_handle: tokio::spawn(async move{
-
-                let exit = exit;
+                Err(())
+            });
+    
+            //Clone for read thread
+            let _exit = exit.clone();
+            //Read Thread
+            let reader_handle: JoinHandle<Result<(), ()>> = tokio::task::spawn(async move{
                 let broadcaster_clone = broadcaster.clone();
-                
                 //Stream through ws_reader
                 ws_reader
                 //Ensure there are listeners
-                .take_while(|_| async {(!broadcaster_clone.strong_count() == 0) && exit.is_empty()})
+                .take_while(|_| async {(!broadcaster_clone.strong_count() == 0)})
                 //Consume stream 
                 .for_each(|msg| async {
                     match msg {
@@ -66,7 +68,7 @@ impl Connection{
                                 //TODO: Add Logging
                             },
                             Err(_err) =>{
-                                exit.send(());
+                                let _ = _exit.send(());
                             },
                         },
                         Err(_err) => {
@@ -75,24 +77,36 @@ impl Connection{
                         },
                     };
                 }).await;
+                Err(())
+            });
 
-            })
+            //Exit Thread
+            let exit_handle: JoinHandle<Result<(), ()>> = tokio::spawn(async move {
+                let _ = exit.subscribe().recv().await;
+                Err(())
+            });
 
+            //Join
+            let _ = try_join!(reader_handle, writer_handle, exit_handle);
+        });
 
+        Ok(Self{
+            //Send messages to Kraken API
+            _sender,
+            //Recieve messages from Kraken API 
+            _broadcaster,
+            _exit,
+            _handle
         })
     }
 
-
-
-
-
     pub async fn send(&self, msg: Message) -> Result<(), ()>{
-        self.sender.send(msg).await.map_err(|err|todo!())
+        self._sender.send(msg).await.map_err(|_err|todo!())
     }
-    pub fn read(&self) -> tokio::sync::broadcast::Receiver<Message>{
-        self.reader.subscribe()
+    pub fn subscribe(&self) -> tokio::sync::broadcast::Receiver<Message>{
+        self._broadcaster.subscribe()
     }
-    pub fn close(mut self) -> Result<(), ()>{
-        self._exit.send(()).map(|_|()).map_err(|_|{()})
+    pub fn close(self){
+        let _ = self._exit.send(());
     }
 }
