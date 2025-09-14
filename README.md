@@ -44,11 +44,9 @@ Rough plan for development:
 
 - [🔄] Core WebSocket connection
 - [🕒] Subscribe/unsubscribe to streams
-- [✅] Fan-in multiple channels into a single consumer
-- [🔄] Fan-out messages to multiple handlers
-- [🕒] API Parsing
+- [🔄] API Parsing
 - [🕒] Typed Streams
-- [🕒] Basic REST support (optional)
+- [X] Basic REST support (optional)
 
 ---
 
@@ -61,4 +59,4 @@ If you’re looking for a production-ready Kraken client, consider using an exis
 
 Parts of this README were created with assistance from [ChatGPT by OpenAI](https://openai.com/chatgpt) to help organize ideas and improve clarity
 
-> ⚖️ **Ethical Use Statement**: I believe in responsible and transparent use of AI tools. While AI helped shape structure and language of the readme, all architectural decisions, implementation, and final content reflect my own understanding, judgment, and intent.
+> ⚖️ **Ethical Use Statement**: I believe in responsible and transparent use of AI tools. While AI helped shape the structure and language of the readme, all architectural decisions, implementation, and final content reflect my own understanding, judgment, and intent.
