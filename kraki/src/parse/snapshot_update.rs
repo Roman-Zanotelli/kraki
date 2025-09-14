@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use crate::parse::market_data::{book::Book, candles::Candles, orders::Orders, ticker::Ticker, trades::Trades};
+use crate::parse::market_data::{book::Book, candles::Candles, instruments::Instruments, orders::Orders, ticker::Ticker, trades::Trades};
 
 
 #[derive(Debug, Deserialize)]
@@ -14,7 +14,7 @@ pub struct SnapshotUpdate{
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum Data{
-    Trades(Vec<Trades>), Ticker(Vec<Ticker>), Candles(Vec<Candles>), Book(Vec<Book>),  Orders(Vec<Orders>)
+    Trades(Vec<Trades>), Ticker(Vec<Ticker>), Candles(Vec<Candles>), Book(Vec<Book>),  Orders(Vec<Orders>), Instruments(Instruments)
 }
 
 #[derive(Debug, Deserialize)]

@@ -1,8 +1,14 @@
+use serde::Deserialize;
+
+
+#[derive(Debug, Deserialize)]
 pub struct Instruments{
     assets: Vec<Asset>,
     pairs: Vec<Pair>
 }
 
+
+#[derive(Debug, Deserialize)]
 pub struct Asset{
     borrowable: bool,
     collateral_value: f64,
@@ -14,6 +20,7 @@ pub struct Asset{
     status: String,
 }
 
+#[derive(Debug, Deserialize)]
 pub struct Pair{
     base: String,
     quote: String,
