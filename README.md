@@ -46,7 +46,7 @@ Rough plan for development:
 - [🕒] Subscribe/unsubscribe to streams
 - [🔄] API Parsing
 - [🕒] Typed Streams
-- [X] Basic REST support (optional)
+- [_] Basic REST support (optional)
 
 ---
 
