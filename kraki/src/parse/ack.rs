@@ -1,10 +1,10 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-
+use crate::parse::constants::{KrakenChannel, KrakenMethod};
 
 #[derive(Debug, Deserialize)]
-pub struct Ack{
-    method: Method,
+pub(crate) struct Ack{
+    method: KrakenMethod,
     result: AckResult,
     success: bool,
     error: Option<String>,
@@ -14,17 +14,11 @@ pub struct Ack{
 }
 
 #[derive(Debug, Deserialize)]
-pub struct AckResult{
-    channel: String,
+struct AckResult{
+    channel: KrakenChannel,
     symbol: String,
     snapshot: Option<bool>,
     warnings: Option<Vec<String>>,
     event_trigger: Option<String>,
     depth: Option<i16>
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum Method{
-    Subscribe, Unsubscribe
 }

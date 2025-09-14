@@ -1,13 +1,13 @@
 use serde::Deserialize;
 
-use crate::parse::market_data::{book::Book, candles::Candles, instruments::Instruments, orders::Orders, ticker::Ticker, trades::Trades};
+use crate::parse::{constants::{KrakenChannel, KrakenUpdateType}, market_data::{book::Book, candles::Candles, instruments::Instruments, orders::Orders, ticker::Ticker, trades::Trades}};
 
 
 #[derive(Debug, Deserialize)]
 pub struct SnapshotUpdate{
-    channel: String,
+    channel: KrakenChannel,
     #[serde(rename = "type")]
-    update_type: UpdateType,
+    update_type: KrakenUpdateType,
     data: Data,
 }
 
@@ -15,10 +15,4 @@ pub struct SnapshotUpdate{
 #[serde(untagged)]
 pub enum Data{
     Trades(Vec<Trades>), Ticker(Vec<Ticker>), Candles(Vec<Candles>), Book(Vec<Book>),  Orders(Vec<Orders>), Instruments(Instruments)
-}
-
-#[derive(Debug, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum UpdateType{
-    Snapshot, Update
 }

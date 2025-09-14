@@ -1,5 +1,7 @@
 pub mod client;
 pub mod parse;
+pub mod symbols;
+pub mod pairs;
 
 #[cfg(test)]
 mod tests {

@@ -1,7 +1,7 @@
 # kraki
 
 **kraki** is a Rust crate for interacting with the [Kraken API](https://docs.kraken.com/).  
-This is a **personal-use** project, built primarily to experiment with and explore **kraken websocket api** in Rust.  
+This is a **personal-use** project, built primarily to experiment with and explore **kraken's websocket api** in Rust.  
 
 ---
 
